@@ -12,15 +12,19 @@ def exportTown(townnumber,townname) :
   os.system("rm temp/*")
 
   # reproject to 900913, which is what we use inside of postGIS
-  os.system("ogr2ogr -t_srs EPSG:900913 -overwrite temp/structures_poly_" + townname + ".shp ../srcdata/massgis_structures/structures_poly_" + str(townnumber) + ".shp"); 
+  r = os.system("ogr2ogr -t_srs EPSG:900913 -overwrite temp/structures_poly_" + townname + ".shp ../srcdata/massgis_structures/structures_poly_" + str(townnumber) + ".shp"); 
+  if ( r ) : exit(r);
 
   # import to postGIS
-  os.system("shp2pgsql -I -s EPSG:900913 -d temp/structures_poly_" + townname + ".shp massgis_structures | psql -q gis");
+  r = os.system("shp2pgsql -D -I -s EPSG:900913 -d temp/structures_poly_" + townname + ".shp massgis_structures | psql -q gis");
+  if ( r ) : exit(r);
 
   # set the projection, shp2pgsl does not do this, don't know why...
-  os.system("psql gis -c \"select UpdateGeometrySRID('massgis_structures','the_geom',900913)\"")
+  r = os.system("psql gis -c \"select UpdateGeometrySRID('massgis_structures','the_geom',900913)\"")
+  if ( r ) : exit(r);
 
-  os.system("rm temp/*")
+  r = os.system("rm temp/*")
+  if ( r ) : exit(r);
 
   outBase = "output/" + townname + "_";
 
@@ -30,12 +34,16 @@ def exportTown(townnumber,townname) :
          "where not exists "
          "  (select * from planet_osm_polygon as osm "
          "   where "
-         "     massgis_structures.town_id = " + townnumber + " and "
+         "     massgis_structures.town_id = " + str(townnumber) + " and "
          "     osm.building != '' and "
          "     ST_Intersects(osm.way,massgis_structures.the_geom))")
 
-  os.system("ogr2ogr -sql \"" + sql + "\" -overwrite -f 'ESRI Shapefile' temp/structures_missing_from_osm_" + townname + ".shp PG:dbname=gis " )
-  os.system("python ogr2osm/ogr2osm.py -f -o " + outBase + "buildings_missing_from_osm.osm temp/structures_missing_from_osm_" + townname + ".shp")
+  r = os.system("ogr2ogr -sql \"" + sql + "\" -overwrite -f 'ESRI Shapefile' temp/structures_missing_from_osm_" + townname + ".shp PG:dbname=gis " )
+  if ( r ) : exit(r);
+
+  r = os.system("python ogr2osm/ogr2osm.py -f -o " + outBase + "buildings_missing_from_osm.osm temp/structures_missing_from_osm_" + townname + ".shp")
+  if ( r ) : exit(r);
+
 
   # get all structures
   #sql = "select ST_SimplifyPreserveTopology(the_geom,0.20),'yes' as building from massgis_structures"
@@ -49,12 +57,15 @@ def exportTown(townnumber,townname) :
          "where exists "
          "  (select * from planet_osm_polygon as osm "
          "   where "
-         "     massgis_structures.town_id = " + townnumber + " and "
+         "     massgis_structures.town_id = " + str(townnumber) + " and "
          "     osm.building != '' and "
          "     ST_Intersects(osm.way,massgis_structures.the_geom))")
 
-  os.system("ogr2ogr -sql \"" + sql + "\" -overwrite -f 'ESRI Shapefile' temp/structures_overlap_with_osm_" + townname + ".shp PG:dbname=gis " )
-  os.system("python ogr2osm/ogr2osm.py -f -o " + outBase + "buildings_overlap_with_osm.osm temp/structures_overlap_with_osm_" + townname + ".shp")
+  r = os.system("ogr2ogr -sql \"" + sql + "\" -overwrite -f 'ESRI Shapefile' temp/structures_overlap_with_osm_" + townname + ".shp PG:dbname=gis " )
+  if ( r ) : exit(r);
+
+  r = os.system("python ogr2osm/ogr2osm.py -f -o " + outBase + "buildings_overlap_with_osm.osm temp/structures_overlap_with_osm_" + townname + ".shp")
+  if ( r ) : exit(r);
 
   # get structures missing from MassGIS
   # can't easily limit search to town.
@@ -63,10 +74,10 @@ def exportTown(townnumber,townname) :
   #os.system("ogr2ogr -sql \"" + sql + "\" -overwrite -f 'ESRI Shapefile' temp/structures_missing_from_massgis_" + str('townnumber) + ".shp PG:dbname=gis " )
   #os.system("python ogr2osm/ogr2osm.py -f -o output/structures_missing_from_massgis_" + str('townnumber) + ".osm temp/structures_missing_from_massgis_" + str('townnumber) + ".shp")
 
-  z=zipfile.ZipFile(outBase + "osm_massgis_structures_merge.zip","w")
-  z.write(outBase + "buildings_missing_from_osm.osm");
-  z.write(outBase + "buildings_overlap_with_osm.osm");
-  z.close()
+  #z=zipfile.ZipFile(outBase + "osm_massgis_structures_merge.zip","w")
+  #z.write(outBase + "buildings_missing_from_osm.osm");
+  #z.write(outBase + "buildings_overlap_with_osm.osm");
+  #z.close()
 
 def convertMassGISTownNumbersToName( number) :
 
