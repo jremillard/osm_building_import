@@ -31,10 +31,11 @@ def exportTown(townnumber,townname) :
   # get structures missing from OSM
   sql = ("select ST_SimplifyPreserveTopology(the_geom,0.20),'yes' as building "
          "from massgis_structures " 
-         "where not exists "
+         "where "
+         "  massgis_structures.town_id = " + str(townnumber) + " and "
+         "  not exists "
          "  (select * from planet_osm_polygon as osm "
          "   where "
-         "     massgis_structures.town_id = " + str(townnumber) + " and "
          "     osm.building != '' and "
          "     ST_Intersects(osm.way,massgis_structures.the_geom))")
 
@@ -54,10 +55,11 @@ def exportTown(townnumber,townname) :
   # get structures overlapping with OSM
   sql = ("select ST_SimplifyPreserveTopology(the_geom,0.20),'yes' as building "
          "from massgis_structures " 
-         "where exists "
+         "where "
+         "  massgis_structures.town_id = " + str(townnumber) + " and "
+         "  exists "
          "  (select * from planet_osm_polygon as osm "
          "   where "
-         "     massgis_structures.town_id = " + str(townnumber) + " and "
          "     osm.building != '' and "
          "     ST_Intersects(osm.way,massgis_structures.the_geom))")
 
