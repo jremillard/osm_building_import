@@ -5,9 +5,6 @@
 import sys, os, zipfile
 
 def exportTown(townnumber,townname) :
-  # no data for town 16.
-  if ( townnumber == 16 ) :  
-    return
 
   os.system("rm temp/*")
 
